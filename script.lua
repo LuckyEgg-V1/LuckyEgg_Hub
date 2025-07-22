@@ -250,7 +250,8 @@ end)
 local btnClose = Instance.new("ImageButton", frame)
 btnClose.Size = UDim2.new(0, 24, 0, 24)
 btnClose.Position = UDim2.new(1, -28, 0, 4)
-btnClose.Image = "rbxassetid://3926305904"
+btnClose.Image = "rbxassetid://7733960981"
+
 btnClose.BackgroundTransparency = 1
 btnClose.MouseButton1Click:Connect(function() gui:Destroy() end)
 
