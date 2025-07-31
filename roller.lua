@@ -211,8 +211,8 @@ gui.Name           = "PremiumPetHatchGui"
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
 local frame = Instance.new("Frame", gui)
-frame.Size              = UDim2.new(0, 320, 0, 360)
-frame.Position          = UDim2.new(0.5, -160, 0.5, -180)
+frame.Size = UDim2.new(0.9, 0, 0.5, 0)      -- 90% of screen width, 50% of screen height
+frame.Position = UDim2.new(0.05, 0, 0.25, 0) -- Centered with padding
 frame.BackgroundColor3  = Color3.fromRGB(30, 30, 30)
 frame.BackgroundTransparency = 0.1
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 20)
