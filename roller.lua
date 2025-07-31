@@ -197,6 +197,7 @@ local function countdownAndRandomize()
     randomizeBtn.AutoButtonColor, toggleBtn.AutoButtonColor = false, false
     for i = 10, 1, -1 do
         randomizeBtn.Text = string.format("🎲 Rerolling… %02ds", i)
+        randomizeBtn.Color = Color3.fromRGB(255, 215, 0)
         wait(1)
     end
     flashEffect(randomizeBtn)
