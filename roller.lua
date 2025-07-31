@@ -277,8 +277,8 @@ end)
 
 local function createPremiumButton(text, yOffset)
     local container = Instance.new("Frame", frame)
-    container.Size     = UDim2.new(1, -40, 0, 50)
-    container.Position = UDim2.new(0, 20, 0, yOffset)
+    container.Size = UDim2.new(0.92, 0, 0.13, 0)           -- 92% width, 13% height per button
+    container.Position = UDim2.new(0.04, 0, yScale, 0)     -- yScale = 0.25, 0.40, 0.55... for button stacking
     container.BackgroundTransparency = 1
 
     local btn = Instance.new("TextButton", container)
