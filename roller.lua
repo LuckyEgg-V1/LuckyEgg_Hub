@@ -102,10 +102,11 @@ local function applyEggESP(egg, petName, weight)
     gui.Name           = "PetBillboard"
     gui.Adornee        = base
     gui.Parent         = base
+    gui.Size           = UDim2.new(0, 270, 0, 50)
     gui.StudsOffset    = Vector3.new(0, 4.5, 0)
     gui.AlwaysOnTop    = true
     gui.MaxDistance    = 500
-    gui.Size = UDim2.new(0, 200, 0, 50)
+
     local lbl = Instance.new("TextLabel", gui)
     lbl.Size                    = UDim2.new(1, 0, 1, 0)
     lbl.BackgroundTransparency  = 1
