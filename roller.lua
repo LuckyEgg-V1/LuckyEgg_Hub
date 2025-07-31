@@ -214,12 +214,26 @@ gui.Name           = "PremiumPetHatchGui"
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
 local frame = Instance.new("Frame", gui)
-frame.AnchorPoint         = Vector2.new(0.5, 0.5)
-frame.Position            = UDim2.new(0.5, 0, 0.5, 0)
-frame.Size                = UDim2.new(0.30, 0, 0.45, 0)  -- 30% width, 45% height of screen
-frame.BackgroundColor3    = Color3.fromRGB(30, 30, 30)
+frame.AnchorPoint            = Vector2.new(0.5, 0.5)
+frame.Position               = UDim2.new(0.5, 0, 0.5, 0)
+frame.Size                   = UDim2.new(0.30, 0, 0.45, 0)
+frame.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
 frame.BackgroundTransparency = 0.1
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 20)
+
+-- **Dynamic scaling** for small screens
+local uiScale = Instance.new("UIScale", frame)
+local baselineWidth = 800 -- px; adjust for desired reference
+local minScale, maxScale = 0.5, 1.0
+
+local function updateScale()
+    local vp = Workspace.CurrentCamera.ViewportSize
+    local scale = math.clamp(vp.X / baselineWidth, minScale, maxScale)
+    uiScale.Scale = scale
+end
+
+updateScale()
+Workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
 
 local stroke = Instance.new("UIStroke", frame)
 stroke.Thickness         = 2
@@ -234,16 +248,16 @@ titleBar.Active             = true
 Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 20)
 
 local title = Instance.new("TextLabel", titleBar)
-title.Size                  = UDim2.new(1, 0, 1, 0)
+title.Size                   = UDim2.new(1, 0, 1, 0)
 title.BackgroundTransparency = 1
-title.Text                 = "✨ Egg Randomizer"
-title.Font                 = Enum.Font.GothamBold
-title.TextSize             = 24
-title.TextColor3           = Color3.fromRGB(255, 215, 0)
-title.AnchorPoint          = Vector2.new(0.5, 0.5)
-title.Position             = UDim2.new(0.5, 0.5, 0.5, 0)
+title.Text                  = "✨ Egg Randomizer"
+title.Font                  = Enum.Font.GothamBold
+title.TextSize              = 24
+title.TextColor3            = Color3.fromRGB(255, 215, 0)
+title.AnchorPoint           = Vector2.new(0.5, 0.5)
+title.Position              = UDim2.new(0.5, 0.5, 0.5, 0)
 
--- ✋ Dragging functionality (mouse and touch)
+-- ✋ Dragging functionality
 local dragging = false
 local dragInput, dragStart, startPos
 
