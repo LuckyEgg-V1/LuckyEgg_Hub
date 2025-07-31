@@ -210,12 +210,13 @@ local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name           = "PremiumPetHatchGui"
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
+-- Make everything slightly smaller: frame, title bar, buttons, and credit
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0.9, 0, 0.5, 0)      -- 90% of screen width, 50% of screen height
-frame.Position = UDim2.new(0.05, 0, 0.25, 0) -- Centered with padding
+frame.Size              = UDim2.new(0, 240, 0, 270) -- was 320x360, now 240x270 (75%)
+frame.Position          = UDim2.new(0.5, -120, 0.5, -135)
 frame.BackgroundColor3  = Color3.fromRGB(30, 30, 30)
 frame.BackgroundTransparency = 0.1
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 20)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
 
 local stroke = Instance.new("UIStroke", frame)
 stroke.Thickness         = 2
@@ -223,17 +224,17 @@ stroke.Color             = Color3.fromRGB(212, 175, 55)
 stroke.ApplyStrokeMode   = Enum.ApplyStrokeMode.Border
 
 local titleBar = Instance.new("Frame", frame)
-titleBar.Size               = UDim2.new(1, 0, 0, 50)
+titleBar.Size               = UDim2.new(1, 0, 0, 38) -- was 50
 titleBar.BackgroundColor3   = Color3.fromRGB(45, 45, 45)
 titleBar.Active             = true
-Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 20)
+Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 16)
 
 local title = Instance.new("TextLabel", titleBar)
 title.Size                  = UDim2.new(1, 0, 1, 0)
 title.BackgroundTransparency = 1
 title.Text                 = "✨ Egg Randomizer"
 title.Font                 = Enum.Font.GothamBold
-title.TextSize             = 24
+title.TextSize             = 18 -- was 24
 title.TextColor3           = Color3.fromRGB(255, 215, 0)
 title.AnchorPoint          = Vector2.new(0.5, 0.5)
 title.Position             = UDim2.new(0.5, 0, 0.5, 0)
@@ -277,8 +278,8 @@ end)
 
 local function createPremiumButton(text, yOffset)
     local container = Instance.new("Frame", frame)
-    container.Size = UDim2.new(0.92, 0, 0.13, 0)           -- 92% width, 13% height per button
-    container.Position = UDim2.new(0.04, 0, yScale, 0)     -- yScale = 0.25, 0.40, 0.55... for button stacking
+    container.Size     = UDim2.new(1, -28, 0, 38) -- was -40,50 now -28,38
+    container.Position = UDim2.new(0, 14, 0, yOffset)
     container.BackgroundTransparency = 1
 
     local btn = Instance.new("TextButton", container)
@@ -286,10 +287,10 @@ local function createPremiumButton(text, yOffset)
     btn.BackgroundColor3= Color3.fromRGB(240, 240, 240)
     btn.BorderSizePixel = 0
     btn.Font            = Enum.Font.GothamSemibold
-    btn.TextSize        = 20
+    btn.TextSize        = 15 -- was 20
     btn.Text            = text
     btn.TextColor3      = Color3.fromRGB(30, 30, 30)
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,12)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10) -- was 12
 
     local grad = Instance.new("UIGradient", btn)
     grad.Color = ColorSequence.new({
@@ -307,9 +308,9 @@ local function createPremiumButton(text, yOffset)
     return btn
 end
 
-randomizeBtn = createPremiumButton("🎲 Reroll Eggs",    80)
-toggleBtn    = createPremiumButton("👁️ ESP: ON",        150)
-autoBtn      = createPremiumButton("🔁 Auto Reroll: OFF", 220)
+randomizeBtn = createPremiumButton("🎲 Reroll Eggs",    60) -- was 80
+toggleBtn    = createPremiumButton("👁️ ESP: ON",        110) -- was 150
+autoBtn      = createPremiumButton("🔁 Auto Reroll: OFF", 160) -- was 220
 
 randomizeBtn.MouseButton1Click:Connect(function()
     if not isBusy then countdownAndRandomize() end
@@ -351,10 +352,10 @@ end)
 initializeEggs()
 
 local credit = Instance.new("TextLabel", frame)
-credit.Size                  = UDim2.new(1, 0, 0, 20)
-credit.Position              = UDim2.new(0, 0, 1, -30)
+credit.Size                  = UDim2.new(1, 0, 0, 16) -- was 20
+credit.Position              = UDim2.new(0, 0, 1, -24) -- was -30
 credit.BackgroundTransparency= 1
 credit.Text                  = "Made by - LuckyEgg"
 credit.Font                  = Enum.Font.Gotham
-credit.TextSize              = 16
+credit.TextSize              = 12 -- was 16
 credit.TextColor3            = Color3.fromRGB(255,215,0)
