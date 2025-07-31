@@ -196,13 +196,19 @@ local function countdownAndRandomize()
     isBusy = true
     randomizeBtn.AutoButtonColor, toggleBtn.AutoButtonColor = false, false
     for i = 10, 1, -1 do
+        randomizeBtn.AutoButtonColor = false
+        randomizeBtn.Active = false
         randomizeBtn.Text = string.format("🎲 Rerolling… %02ds", i)
-        randomizeBtn.Color = Color3.fromRGB(255, 215, 0)
+        
+
+    
         wait(1)
     end
     flashEffect(randomizeBtn)
     randomizeNearbyEggs()
     randomizeBtn.Text, randomizeBtn.AutoButtonColor = "🎲 Reroll Eggs", true
+    randomizeBtn.AutoButtonColor = true
+    randomizeBtn.Active = true
     toggleBtn.AutoButtonColor = true
     isBusy = false
 end
