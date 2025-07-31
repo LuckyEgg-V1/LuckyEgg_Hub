@@ -111,7 +111,7 @@ local function applyEggESP(egg, petName, weight)
     lbl.Size                    = UDim2.new(1, 0, 1, 0)
     lbl.BackgroundTransparency  = 1
     lbl.Text                   = string.format(
-        "%s | %s%s [%0.2f kg]",
+        "%s (%s%s [%0.2f KG])",
         egg.Name,
         petName,
         ready and "" or " (Not Ready)",
