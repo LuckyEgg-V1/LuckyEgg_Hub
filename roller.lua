@@ -29,7 +29,7 @@ local petTable = {
 
 -- 🔧 State
 local espEnabled   = true
-local eggDataMap   = {}
+local eggDataMap   = {}      -- maps each egg Model to { petName=string, weight=number }
 local isBusy       = false
 local autoRunning  = false
 local bestPets     = {
@@ -38,7 +38,7 @@ local bestPets     = {
     ["T-Rex"]=true, Spinosaurus=true, Kitsune=true
 }
 
--- ✨ Glitch label effect
+-- ✨ Glitch label effect (gold flash)
 local function glitchLabelEffect(lbl)
     coroutine.wrap(function()
         local orig = lbl.TextColor3
@@ -53,40 +53,44 @@ end
 
 -- Random weight generator
 local function getBiasedRandom()
-    local function buildWeighted(startVal, endVal, bias)
-        local vals = {}
-        for i = math.floor(startVal*100), math.floor(endVal*100) do
-            local v = i/100
-            local w = math.exp(-((v - startVal)*bias))
-            for _ = 1, math.floor(w*100) do
-                table.insert(vals, v)
+    local function buildWeightedTable(startVal, endVal, biasFactor)
+        local values = {}
+        for i = math.floor(startVal * 100), math.floor(endVal * 100) do
+            local val = i / 100
+            local weight = math.exp(-((val - startVal) * biasFactor))
+            local count = math.floor(weight * 100)
+            for _ = 1, count do
+                table.insert(values, val)
             end
         end
-        return vals
+        return values
     end
-    local normal = buildWeighted(0.80, 2.20, 4)
-    local rare   = buildWeighted(2.21, 10.00, 1.5)
-    if math.random(100)==1 then
-        return rare[math.random(#rare)]
+    local normalRange = buildWeightedTable(0.80, 2.20, 4)
+    local rareRange   = buildWeightedTable(2.21, 10.00, 1.5)
+    if math.random(100) == 1 then
+        return rareRange[math.random(#rareRange)]
     else
-        return normal[math.random(#normal)]
+        return normalRange[math.random(#normalRange)]
     end
 end
 
--- Check if egg can reroll
+-- Determine if an egg is ready to reroll
 local function isEggReady(egg)
     local rf = egg:FindFirstChild("ReadyToHatch")
-    if rf and rf:IsA("BoolValue") then return rf.Value end
+    if rf and rf:IsA("BoolValue") then
+        return rf.Value
+    end
     local ht = egg:FindFirstChild("HatchTime")
-    if ht and ht:IsA("NumberValue") then return ht.Value <= 0.05 end
+    if ht and ht:IsA("NumberValue") then
+        return ht.Value <= 0.05
+    end
     return true
 end
 
 -- 🖼 ESP visuals
-local function applyEggESP(egg, name, weight)
-    -- remove prior
-    local old = egg:FindFirstChild("PetBillboard", true)
-    if old then old:Destroy() end
+local function applyEggESP(egg, petName, weight)
+    local oldBill = egg:FindFirstChild("PetBillboard", true)
+    if oldBill then oldBill:Destroy() end
     if egg:FindFirstChild("ESPHighlight") then egg.ESPHighlight:Destroy() end
     if not espEnabled then return end
 
@@ -94,95 +98,104 @@ local function applyEggESP(egg, name, weight)
     if not base then return end
 
     local ready = isEggReady(egg)
-    local gui   = Instance.new("BillboardGui", base)
-    gui.Name        = "PetBillboard"
-    gui.Adornee     = base
-    gui.Size        = UDim2.new(0, 200, 0, 40)
-    gui.StudsOffset = Vector3.new(0, 4, 0)
-    gui.AlwaysOnTop = true
-    gui.MaxDistance = 300
+    local gui = Instance.new("BillboardGui")
+    gui.Name           = "PetBillboard"
+    gui.Adornee        = base
+    gui.Parent         = base
+    gui.Size           = UDim2.new(0, 270, 0, 50)
+    gui.StudsOffset    = Vector3.new(0, 4.5, 0)
+    gui.AlwaysOnTop    = true
+    gui.MaxDistance    = 500
 
     local lbl = Instance.new("TextLabel", gui)
-    lbl.Size                   = UDim2.new(1,0,1,0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text                   = string.format("%s | %s%s [%0.2f kg]",
-                                egg.Name,
-                                name,
-                                ready and "" or " (Not Ready)",
-                                weight)
-    lbl.TextColor3            = ready and Color3.new(1,1,1) or Color3.fromRGB(160,160,160)
+    lbl.Size                    = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency  = 1
+    lbl.Text                   = string.format(
+        "%s | %s%s [%0.2f kg]",
+        egg.Name,
+        petName,
+        ready and "" or " (Not Ready)",
+        weight
+    )
+    lbl.TextColor3            = ready and Color3.new(1, 1, 1) or Color3.fromRGB(160, 160, 160)
     lbl.TextStrokeTransparency = ready and 0 or 0.5
     lbl.TextScaled            = true
     lbl.Font                  = Enum.Font.FredokaOne
+
     glitchLabelEffect(lbl)
 
     local hi = Instance.new("Highlight", egg)
     hi.Name             = "ESPHighlight"
     hi.Adornee          = egg
-    hi.FillColor        = Color3.fromRGB(255,200,0)
-    hi.OutlineColor     = Color3.new(1,1,1)
+    hi.FillColor        = Color3.fromRGB(255, 200, 0)
+    hi.OutlineColor     = Color3.new(1, 1, 1)
     hi.FillTransparency = 0.7
     hi.DepthMode        = Enum.HighlightDepthMode.AlwaysOnTop
 end
 
 local function removeEggESP(egg)
-    local bill = egg:FindFirstChild("PetBillboard", true)
-    if bill then bill:Destroy() end
+    local oldBill = egg:FindFirstChild("PetBillboard", true)
+    if oldBill then oldBill:Destroy() end
     if egg:FindFirstChild("ESPHighlight") then egg.ESPHighlight:Destroy() end
 end
 
--- 🌱 Collect eggs nearby
+-- 🌱 Egg collection
 local function getPlayerGardenEggs(radius)
     local out = {}
     local char = player.Character or player.CharacterAdded:Wait()
     local root = char:FindFirstChild("HumanoidRootPart")
-    for _,m in ipairs(Workspace:GetDescendants()) do
-        if m:IsA("Model") and petTable[m.Name] and (m:GetModelCFrame().Position - root.Position).Magnitude <= (radius or 60) then
-            table.insert(out, m)
+    if not root then return out end
+    for _, m in pairs(Workspace:GetDescendants()) do
+        if m:IsA("Model") and petTable[m.Name] then
+            if (m:GetModelCFrame().Position - root.Position).Magnitude <= (radius or 60) then
+                table.insert(out, m)
+            end
         end
     end
     return out
 end
 
--- Initialize eggs
+-- Initialize all eggs with a starting pick + weight and ESP
 local function initializeEggs()
-    for _,egg in ipairs(getPlayerGardenEggs(60)) do
-        local pick, weight = petTable[egg.Name][math.random(#petTable[egg.Name])], getBiasedRandom()
+    for _, egg in ipairs(getPlayerGardenEggs(60)) do
+        local pick   = petTable[egg.Name][math.random(#petTable[egg.Name])]
+        local weight = getBiasedRandom()
         eggDataMap[egg] = { petName = pick, weight = weight }
         applyEggESP(egg, pick, weight)
     end
 end
 
--- Reroll logic
+-- 🌟 Randomize only ready eggs, but ESP all
 local function randomizeNearbyEggs()
-    for _,egg in ipairs(getPlayerGardenEggs(60)) do
+    for _, egg in ipairs(getPlayerGardenEggs(60)) do
         local data = eggDataMap[egg]
         if isEggReady(egg) then
-            local pick, w = petTable[egg.Name][math.random(#petTable[egg.Name])], getBiasedRandom()
-            data = { petName = pick, weight = w }
+            local pick   = petTable[egg.Name][math.random(#petTable[egg.Name])]
+            local weight = getBiasedRandom()
+            data = { petName = pick, weight = weight }
             eggDataMap[egg] = data
         end
         applyEggESP(egg, data.petName, data.weight)
     end
 end
 
--- Flash effect
+-- ⚡ Flash effect
 local function flashEffect(btn)
     local bg, txt = btn.BackgroundColor3, btn.TextColor3
-    for _=1,3 do
-        btn.BackgroundColor3, btn.TextColor3 = Color3.new(1,1,1), Color3.fromRGB(50,50,50)
+    for _ = 1, 3 do
+        btn.BackgroundColor3, btn.TextColor3 = Color3.new(1, 1, 1), Color3.fromRGB(50, 50, 50)
         wait(0.05)
         btn.BackgroundColor3, btn.TextColor3 = bg, txt
         wait(0.05)
     end
 end
 
--- Countdown & reroll
+-- ⏳ Countdown & lock
 local function countdownAndRandomize()
     isBusy = true
     randomizeBtn.AutoButtonColor, toggleBtn.AutoButtonColor = false, false
-    for i=8,1,-1 do
-        randomizeBtn.Text = ("🎲 Rerolling… %ds"):format(i)
+    for i = 10, 1, -1 do
+        randomizeBtn.Text = string.format("🎲 Rerolling… %02ds", i)
         wait(1)
     end
     flashEffect(randomizeBtn)
@@ -192,121 +205,156 @@ local function countdownAndRandomize()
     isBusy = false
 end
 
--- 🌿 GUI Setup (240×300)
+-- 🌿 Luxe GUI Setup
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "PremiumPetHatchGui"; gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+gui.Name           = "PremiumPetHatchGui"
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
 local frame = Instance.new("Frame", gui)
-frame.AnchorPoint = Vector2.new(0.5,0.5)
-frame.Position    = UDim2.new(0.5,0,0.5,0)
-frame.Size        = UDim2.new(0,240,0,300)
-frame.BackgroundColor3    = Color3.fromRGB(30,30,30)
+frame.Size              = UDim2.new(0, 320, 0, 360)
+frame.Position          = UDim2.new(0.5, -160, 0.5, -180)
+frame.BackgroundColor3  = Color3.fromRGB(30, 30, 30)
 frame.BackgroundTransparency = 0.1
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0,16)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 20)
 
 local stroke = Instance.new("UIStroke", frame)
-stroke.Thickness       = 2
-stroke.Color           = Color3.fromRGB(212,175,55)
-stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke.Thickness         = 2
+stroke.Color             = Color3.fromRGB(212, 175, 55)
+stroke.ApplyStrokeMode   = Enum.ApplyStrokeMode.Border
 
--- Title bar (240×36)
 local titleBar = Instance.new("Frame", frame)
-titleBar.Size             = UDim2.new(1,0,0,36)
-titleBar.Position         = UDim2.new(0,0,0,0)
-titleBar.BackgroundColor3 = Color3.fromRGB(45,45,45)
-titleBar.Active           = true
-Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0,16)
+titleBar.Size               = UDim2.new(1, 0, 0, 50)
+titleBar.BackgroundColor3   = Color3.fromRGB(45, 45, 45)
+titleBar.Active             = true
+Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 20)
 
 local title = Instance.new("TextLabel", titleBar)
-title.Size                   = UDim2.new(1,0,1,0)
+title.Size                  = UDim2.new(1, 0, 1, 0)
 title.BackgroundTransparency = 1
-title.Text                   = "✨ Egg Randomizer"
-title.Font                   = Enum.Font.GothamBold
-title.TextSize               = 18
-title.TextColor3             = Color3.fromRGB(255,215,0)
-title.AnchorPoint            = Vector2.new(0.5,0.5)
-title.Position               = UDim2.new(0.5,0,0.5,0)
+title.Text                 = "✨ Egg Randomizer"
+title.Font                 = Enum.Font.GothamBold
+title.TextSize             = 24
+title.TextColor3           = Color3.fromRGB(255, 215, 0)
+title.AnchorPoint          = Vector2.new(0.5, 0.5)
+title.Position             = UDim2.new(0.5, 0, 0.5, 0)
 
--- Drag logic
-do
-    local dragging, di, ds, sp = false, nil, nil, nil
-    titleBar.InputBegan:Connect(function(i)
-        if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
-            dragging, ds, sp = true, i.Position, frame.Position
-            i.Changed:Connect(function() if i.UserInputState==Enum.UserInputState.End then dragging=false end end)
-        end
-    end)
-    titleBar.InputChanged:Connect(function(i)
-        if i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch then
-            di = i
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(i)
-        if dragging and i==di then
-            local d = i.Position - ds
-            frame.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
-        end
-    end)
-end
+-- ✋ Dragging functionality (mouse and touch)
+local dragging = false
+local dragInput, dragStart, startPos
 
--- Button factory (fixed offsets)
-local function createBtn(text, y)
-    local cont = Instance.new("Frame", frame)
-    cont.Size     = UDim2.new(1,-16,0,28)
-    cont.Position = UDim2.new(0,8,0,y,0)
-    cont.BackgroundTransparency = 1
-    local btn = Instance.new("TextButton", cont)
-    btn.Size            = UDim2.new(1,0,1,0)
-    btn.BackgroundColor3= Color3.fromRGB(240,240,240)
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging   = true
+        dragStart  = input.Position
+        startPos   = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+local function createPremiumButton(text, yOffset)
+    local container = Instance.new("Frame", frame)
+    container.Size     = UDim2.new(1, -40, 0, 50)
+    container.Position = UDim2.new(0, 20, 0, yOffset)
+    container.BackgroundTransparency = 1
+
+    local btn = Instance.new("TextButton", container)
+    btn.Size            = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundColor3= Color3.fromRGB(240, 240, 240)
     btn.BorderSizePixel = 0
     btn.Font            = Enum.Font.GothamSemibold
-    btn.TextSize        = 16
+    btn.TextSize        = 20
     btn.Text            = text
-    btn.TextColor3      = Color3.fromRGB(30,30,30)
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+    btn.TextColor3      = Color3.fromRGB(30, 30, 30)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,12)
+
     local grad = Instance.new("UIGradient", btn)
-    grad.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0,Color3.new(1,1,1)), ColorSequenceKeypoint.new(1,Color3.fromRGB(220,220,220)) })
-    btn.MouseEnter:Connect(function() btn.BackgroundColor3=Color3.fromRGB(212,175,55) end)
-    btn.MouseLeave:Connect(function() btn.BackgroundColor3=Color3.fromRGB(240,240,240) end)
+    grad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.new(1,1,1)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(220,220,220)),
+    })
+
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(212,175,55)
+    end)
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(240,240,240)
+    end)
+
     return btn
 end
 
-randomizeBtn = createBtn("🎲 Reroll Eggs",    0.30)
-toggleBtn    = createBtn("👁️ ESP: ON",        0.55)
-autoBtn      = createBtn("🔁 Auto Reroll: OFF",0.78)
+randomizeBtn = createPremiumButton("🎲 Reroll Eggs",    80)
+toggleBtn    = createPremiumButton("👁️ ESP: ON",        150)
+autoBtn      = createPremiumButton("🔁 Auto Reroll: OFF", 220)
 
-randomizeBtn.MouseButton1Click:Connect(function() if not isBusy then countdownAndRandomize() end end)
+randomizeBtn.MouseButton1Click:Connect(function()
+    if not isBusy then countdownAndRandomize() end
+end)
+
 toggleBtn.MouseButton1Click:Connect(function()
     if not isBusy then
         espEnabled = not espEnabled
         toggleBtn.Text = espEnabled and "👁️ ESP: ON" or "👁️ ESP: OFF"
-        for egg,data in pairs(eggDataMap) do
-            if espEnabled then applyEggESP(egg,data.petName,data.weight) else removeEggESP(egg) end
+        for egg, data in pairs(eggDataMap) do
+            if espEnabled then
+                applyEggESP(egg, data.petName, data.weight)
+            else
+                removeEggESP(egg)
+            end
         end
     end
 end)
+
 autoBtn.MouseButton1Click:Connect(function()
     autoRunning = not autoRunning
     autoBtn.Text = autoRunning and "🔁 Auto Reroll: ON" or "🔁 Auto Reroll: OFF"
     coroutine.wrap(function()
         while autoRunning do
             if not isBusy then countdownAndRandomize() end
-            for _,d in pairs(eggDataMap) do
-                if bestPets[d.petName] then autoRunning=false; autoBtn.Text="🔁 Auto Reroll: OFF"; break end
+            for _, data in pairs(eggDataMap) do
+                if bestPets[data.petName] then
+                    autoRunning = false
+                    autoBtn.Text = "🔁 Auto Reroll: OFF"
+                    break
+                end
             end
             wait(1)
         end
     end)()
 end)
 
+-- initialize on load
 initializeEggs()
 
--- Credit
 local credit = Instance.new("TextLabel", frame)
-credit.Size                   = UDim2.new(1,0,0,16)
-credit.Position               = UDim2.new(0,0,0.92,0)
-credit.BackgroundTransparency = 1
-credit.Text                   = "Made by - LuckyEgg"
-credit.Font                   = Enum.Font.Gotham
-credit.TextSize               = 14
-credit.TextColor3             = Color3.fromRGB(255,215,0)
+credit.Size                  = UDim2.new(1, 0, 0, 20)
+credit.Position              = UDim2.new(0, 0, 1, -30)
+credit.BackgroundTransparency= 1
+credit.Text                  = "Made by - LuckyEgg"
+credit.Font                  = Enum.Font.Gotham
+credit.TextSize              = 16
+credit.TextColor3            = Color3.fromRGB(255,215,0)
