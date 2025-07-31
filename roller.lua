@@ -318,15 +318,13 @@ randomizeBtn.MouseButton1Click:Connect(function()
 end)
 
 toggleBtn.MouseButton1Click:Connect(function()
-    if not isBusy then
-        espEnabled = not espEnabled
-        toggleBtn.Text = espEnabled and "👁️ ESP: ON" or "👁️ ESP: OFF"
-        for egg, data in pairs(eggDataMap) do
-            if espEnabled then
-                applyEggESP(egg, data.petName, data.weight)
-            else
-                removeEggESP(egg)
-            end
+    espEnabled = not espEnabled
+    toggleBtn.Text = espEnabled and "👁️ ESP: ON" or "👁️ ESP: OFF"
+    for egg, data in pairs(eggDataMap) do
+        if espEnabled then
+            applyEggESP(egg, data.petName, data.weight)
+        else
+            removeEggESP(egg)
         end
     end
 end)
