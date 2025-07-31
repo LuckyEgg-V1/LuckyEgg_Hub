@@ -29,7 +29,7 @@ local petTable = {
 
 -- 🔧 State
 local espEnabled   = true
-local eggDataMap   = {}      -- maps each egg Model to { petName=string, weight=number }
+local eggDataMap   = {}
 local isBusy       = false
 local autoRunning  = false
 local bestPets     = {
@@ -99,13 +99,13 @@ local function applyEggESP(egg, petName, weight)
 
     local ready = isEggReady(egg)
     local gui = Instance.new("BillboardGui")
-    gui.Name           = "PetBillboard"
-    gui.Adornee        = base
-    gui.Parent         = base
-    gui.Size           = UDim2.new(0, 270, 0, 50)
-    gui.StudsOffset    = Vector3.new(0, 4.5, 0)
-    gui.AlwaysOnTop    = true
-    gui.MaxDistance    = 500
+    gui.Name        = "PetBillboard"
+    gui.Adornee     = base
+    gui.Parent      = base
+    gui.Size        = UDim2.new(0, 270, 0, 50)
+    gui.StudsOffset = Vector3.new(0, 4.5, 0)
+    gui.AlwaysOnTop = true
+    gui.MaxDistance = 500
 
     local lbl = Instance.new("TextLabel", gui)
     lbl.Size                    = UDim2.new(1, 0, 1, 0)
@@ -134,9 +134,12 @@ local function applyEggESP(egg, petName, weight)
 end
 
 local function removeEggESP(egg)
-    local oldBill = egg:FindFirstChild("PetBillboard", true)
-    if oldBill then oldBill:Destroy() end
-    if egg:FindFirstChild("ESPHighlight") then egg.ESPHighlight:Destroy() end
+    if egg:FindFirstChild("PetBillboard", true) then
+        egg:FindFirstChild("PetBillboard", true):Destroy()
+    end
+    if egg:FindFirstChild("ESPHighlight") then
+        egg.ESPHighlight:Destroy()
+    end
 end
 
 -- 🌱 Egg collection
@@ -145,7 +148,7 @@ local function getPlayerGardenEggs(radius)
     local char = player.Character or player.CharacterAdded:Wait()
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return out end
-    for _, m in pairs(Workspace:GetDescendants()) do
+    for _, m in ipairs(Workspace:GetDescendants()) do
         if m:IsA("Model") and petTable[m.Name] then
             if (m:GetModelCFrame().Position - root.Position).Magnitude <= (radius or 60) then
                 table.insert(out, m)
@@ -172,8 +175,8 @@ local function randomizeNearbyEggs()
         if isEggReady(egg) then
             local pick   = petTable[egg.Name][math.random(#petTable[egg.Name])]
             local weight = getBiasedRandom()
-            data = { petName = pick, weight = weight }
-            eggDataMap[egg] = data
+            eggDataMap[egg] = { petName = pick, weight = weight }
+            data = eggDataMap[egg]
         end
         applyEggESP(egg, data.petName, data.weight)
     end
@@ -211,9 +214,10 @@ gui.Name           = "PremiumPetHatchGui"
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
 local frame = Instance.new("Frame", gui)
-frame.Size              = UDim2.new(0, 320, 0, 360)
-frame.Position          = UDim2.new(0.5, -160, 0.5, -180)
-frame.BackgroundColor3  = Color3.fromRGB(30, 30, 30)
+frame.AnchorPoint         = Vector2.new(0.5, 0.5)
+frame.Position            = UDim2.new(0.5, 0, 0.5, 0)
+frame.Size                = UDim2.new(0.30, 0, 0.45, 0)  -- 30% width, 45% height of screen
+frame.BackgroundColor3    = Color3.fromRGB(30, 30, 30)
 frame.BackgroundTransparency = 0.1
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 20)
 
@@ -224,6 +228,7 @@ stroke.ApplyStrokeMode   = Enum.ApplyStrokeMode.Border
 
 local titleBar = Instance.new("Frame", frame)
 titleBar.Size               = UDim2.new(1, 0, 0, 50)
+titleBar.Position           = UDim2.new(0, 0, 0, 0)
 titleBar.BackgroundColor3   = Color3.fromRGB(45, 45, 45)
 titleBar.Active             = true
 Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 20)
@@ -236,7 +241,7 @@ title.Font                 = Enum.Font.GothamBold
 title.TextSize             = 24
 title.TextColor3           = Color3.fromRGB(255, 215, 0)
 title.AnchorPoint          = Vector2.new(0.5, 0.5)
-title.Position             = UDim2.new(0.5, 0, 0.5, 0)
+title.Position             = UDim2.new(0.5, 0.5, 0.5, 0)
 
 -- ✋ Dragging functionality (mouse and touch)
 local dragging = false
@@ -275,10 +280,10 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
-local function createPremiumButton(text, yOffset)
+local function createPremiumButton(text, yOffsetScale)
     local container = Instance.new("Frame", frame)
     container.Size     = UDim2.new(1, -40, 0, 50)
-    container.Position = UDim2.new(0, 20, 0, yOffset)
+    container.Position = UDim2.new(0, 20, yOffsetScale, 0)
     container.BackgroundTransparency = 1
 
     local btn = Instance.new("TextButton", container)
@@ -307,9 +312,10 @@ local function createPremiumButton(text, yOffset)
     return btn
 end
 
-randomizeBtn = createPremiumButton("🎲 Reroll Eggs",    80)
-toggleBtn    = createPremiumButton("👁️ ESP: ON",        150)
-autoBtn      = createPremiumButton("🔁 Auto Reroll: OFF", 220)
+-- Buttons at 25%, 45%, 65% down the frame
+randomizeBtn = createPremiumButton("🎲 Reroll Eggs",    0.25)
+toggleBtn    = createPremiumButton("👁️ ESP: ON",        0.45)
+autoBtn      = createPremiumButton("🔁 Auto Reroll: OFF", 0.65)
 
 randomizeBtn.MouseButton1Click:Connect(function()
     if not isBusy then countdownAndRandomize() end
@@ -347,7 +353,6 @@ autoBtn.MouseButton1Click:Connect(function()
     end)()
 end)
 
--- initialize on load
 initializeEggs()
 
 local credit = Instance.new("TextLabel", frame)
