@@ -102,7 +102,22 @@ local function applyEggESP(egg, petName, weight)
     gui.Name           = "PetBillboard"
     gui.Adornee        = base
     gui.Parent         = base
-    gui.Size           = UDim2.new(0, 270, 0, 50)
+    local closeCount = 0
+    for _, other in ipairs(getPlayerGardenEggs(8)) do
+     if other ~= egg and (other:GetModelCFrame().Position - egg:GetModelCFrame().Position).Magnitude < 5 then
+        closeCount = closeCount + 1
+        end
+         end
+
+-- Dynamically scale ESP size
+    local baseWidth, baseHeight = 270, 50
+    local minWidth, minHeight = 90, 20
+    if closeCount > 2 then
+     local scale = math.max(0.4, 1 - (closeCount * 0.1)) -- gets smaller as more overlap
+     gui.Size = UDim2.new(0, baseWidth * scale, 0, baseHeight * scale)
+    else
+     gui.Size = UDim2.new(0, baseWidth, 0, baseHeight)
+    end
     gui.StudsOffset    = Vector3.new(0, 4.5, 0)
     gui.AlwaysOnTop    = true
     gui.MaxDistance    = 500
