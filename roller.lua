@@ -213,167 +213,128 @@ local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name           = "PremiumPetHatchGui"
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
+-- Main frame: 70% width, 50% height, centered
 local frame = Instance.new("Frame", gui)
 frame.AnchorPoint            = Vector2.new(0.5, 0.5)
 frame.Position               = UDim2.new(0.5, 0, 0.5, 0)
-frame.Size                   = UDim2.new(0.30, 0, 0.45, 0)
+frame.Size                   = UDim2.new(0.7, 0, 0.5, 0)
 frame.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
 frame.BackgroundTransparency = 0.1
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 20)
-
--- **Dynamic scaling** for small screens
-local uiScale = Instance.new("UIScale", frame)
-local baselineWidth = 800 -- px; adjust for desired reference
-local minScale, maxScale = 0.5, 1.0
-
-local function updateScale()
-    local vp = Workspace.CurrentCamera.ViewportSize
-    local scale = math.clamp(vp.X / baselineWidth, minScale, maxScale)
-    uiScale.Scale = scale
-end
-
-updateScale()
-Workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
 
 local stroke = Instance.new("UIStroke", frame)
 stroke.Thickness         = 2
 stroke.Color             = Color3.fromRGB(212, 175, 55)
 stroke.ApplyStrokeMode   = Enum.ApplyStrokeMode.Border
 
+-- Title bar (fixed height in scale)
 local titleBar = Instance.new("Frame", frame)
-titleBar.Size               = UDim2.new(1, 0, 0, 50)
-titleBar.Position           = UDim2.new(0, 0, 0, 0)
-titleBar.BackgroundColor3   = Color3.fromRGB(45, 45, 45)
-titleBar.Active             = true
+titleBar.Size             = UDim2.new(1, 0, 0.15, 0)  -- 15% of frame height
+titleBar.Position         = UDim2.new(0, 0, 0, 0)
+titleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+titleBar.Active           = true
 Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 20)
 
 local title = Instance.new("TextLabel", titleBar)
-title.Size                   = UDim2.new(1, 0, 1, 0)
-title.BackgroundTransparency = 1
+title.AnchorPoint           = Vector2.new(0.5, 0.5)
+title.Position              = UDim2.new(0.5, 0.5, 0.5, 0)
+title.Size                  = UDim2.new(1, -20, 1, -10)
+title.BackgroundTransparency= 1
 title.Text                  = "✨ Egg Randomizer"
 title.Font                  = Enum.Font.GothamBold
 title.TextSize              = 24
 title.TextColor3            = Color3.fromRGB(255, 215, 0)
-title.AnchorPoint           = Vector2.new(0.5, 0.5)
-title.Position              = UDim2.new(0.5, 0.5, 0.5, 0)
 
--- ✋ Dragging functionality
-local dragging = false
-local dragInput, dragStart, startPos
+-- Drag logic (unchanged)
+do
+    local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
+    titleBar.InputBegan:Connect(function(inp)
+        if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
+            dragging, dragStart, startPos = true, inp.Position, frame.Position
+            inp.Changed:Connect(function() if inp.UserInputState==Enum.UserInputState.End then dragging=false end end)
+        end
+    end)
+    titleBar.InputChanged:Connect(function(inp)
+        if inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch then
+            dragInput = inp
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(inp)
+        if dragging and inp==dragInput then
+            local delta = inp.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+delta.X, startPos.Y.Scale, startPos.Y.Offset+delta.Y)
+        end
+    end)
+end
 
-titleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        dragging   = true
-        dragStart  = input.Position
-        startPos   = frame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
+-- Buttons container with UIListLayout
+local buttonsFrame = Instance.new("Frame", frame)
+buttonsFrame.AnchorPoint = Vector2.new(0.5, 0)
+buttonsFrame.Position    = UDim2.new(0.5, 0, 0.18, 0)  -- just below titleBar
+buttonsFrame.Size        = UDim2.new(0.9, 0, 0.7, 0)   -- 90% width, 70% height of frame
+buttonsFrame.BackgroundTransparency = 1
 
-titleBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement
-    or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
+local list = Instance.new("UIListLayout", buttonsFrame)
+list.FillDirection = Enum.FillDirection.Vertical
+list.Padding       = UDim.new(0, 10)
+list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+list.VerticalAlignment   = Enum.VerticalAlignment.Top
 
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
-local function createPremiumButton(text, yOffsetScale)
-    local container = Instance.new("Frame", frame)
-    container.Size     = UDim2.new(1, -40, 0, 50)
-    container.Position = UDim2.new(0, 20, yOffsetScale, 0)
-    container.BackgroundTransparency = 1
-
-    local btn = Instance.new("TextButton", container)
-    btn.Size            = UDim2.new(1, 0, 1, 0)
+-- Helper to create a button filling 28% of buttonsFrame height
+local function newButton(text)
+    local btn = Instance.new("TextButton", buttonsFrame)
+    btn.Size            = UDim2.new(1, 0, 0.28, 0)
     btn.BackgroundColor3= Color3.fromRGB(240, 240, 240)
     btn.BorderSizePixel = 0
     btn.Font            = Enum.Font.GothamSemibold
     btn.TextSize        = 20
     btn.Text            = text
     btn.TextColor3      = Color3.fromRGB(30, 30, 30)
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,12)
-
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
     local grad = Instance.new("UIGradient", btn)
-    grad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.new(1,1,1)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(220,220,220)),
-    })
-
-    btn.MouseEnter:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(212,175,55)
-    end)
-    btn.MouseLeave:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(240,240,240)
-    end)
-
+    grad.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.new(1,1,1)), ColorSequenceKeypoint.new(1, Color3.fromRGB(220,220,220)) })
+    btn.MouseEnter:Connect(function() btn.BackgroundColor3=Color3.fromRGB(212,175,55) end)
+    btn.MouseLeave:Connect(function() btn.BackgroundColor3=Color3.fromRGB(240,240,240) end)
     return btn
 end
 
--- Buttons at 25%, 45%, 65% down the frame
-randomizeBtn = createPremiumButton("🎲 Reroll Eggs",    0.25)
-toggleBtn    = createPremiumButton("👁️ ESP: ON",        0.45)
-autoBtn      = createPremiumButton("🔁 Auto Reroll: OFF", 0.65)
+randomizeBtn = newButton("🎲 Reroll Eggs")
+toggleBtn    = newButton("👁️ ESP: ON")
+autoBtn      = newButton("🔁 Auto Reroll: OFF")
 
-randomizeBtn.MouseButton1Click:Connect(function()
-    if not isBusy then countdownAndRandomize() end
-end)
-
+-- Wire up button actions (unchanged)
+randomizeBtn.MouseButton1Click:Connect(function() if not isBusy then countdownAndRandomize() end end)
 toggleBtn.MouseButton1Click:Connect(function()
     if not isBusy then
         espEnabled = not espEnabled
         toggleBtn.Text = espEnabled and "👁️ ESP: ON" or "👁️ ESP: OFF"
-        for egg, data in pairs(eggDataMap) do
-            if espEnabled then
-                applyEggESP(egg, data.petName, data.weight)
-            else
-                removeEggESP(egg)
-            end
+        for egg,data in pairs(eggDataMap) do
+            if espEnabled then applyEggESP(egg,data.petName,data.weight) else removeEggESP(egg) end
         end
     end
 end)
-
 autoBtn.MouseButton1Click:Connect(function()
     autoRunning = not autoRunning
     autoBtn.Text = autoRunning and "🔁 Auto Reroll: ON" or "🔁 Auto Reroll: OFF"
     coroutine.wrap(function()
         while autoRunning do
             if not isBusy then countdownAndRandomize() end
-            for _, data in pairs(eggDataMap) do
-                if bestPets[data.petName] then
-                    autoRunning = false
-                    autoBtn.Text = "🔁 Auto Reroll: OFF"
-                    break
-                end
+            for _,data in pairs(eggDataMap) do
+                if bestPets[data.petName] then autoRunning=false; autoBtn.Text="🔁 Auto Reroll: OFF"; break end
             end
             wait(1)
         end
     end)()
 end)
 
+-- Initialize and credit
 initializeEggs()
-
 local credit = Instance.new("TextLabel", frame)
-credit.Size                  = UDim2.new(1, 0, 0, 20)
-credit.Position              = UDim2.new(0, 0, 1, -30)
+credit.Size                  = UDim2.new(1, 0, 0.1, 0)
+credit.Position              = UDim2.new(0, 0, 0.92, 0)
 credit.BackgroundTransparency= 1
 credit.Text                  = "Made by - LuckyEgg"
 credit.Font                  = Enum.Font.Gotham
 credit.TextSize              = 16
 credit.TextColor3            = Color3.fromRGB(255,215,0)
+credit.TextScaled            = true
