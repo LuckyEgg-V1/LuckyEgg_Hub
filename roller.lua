@@ -25,7 +25,7 @@ local petTable = {
     ["Paradise Egg"]  = { "Ostrich", "Peacock", "Capybara", "Mimic Octopus" },
     ["Dinosaur Egg"]  = { "Raptor", "Triceratops", "Stegosaurus" },
     ["Primal Egg"]    = { "Parasaurolophus", "Iguanodon", "Pachycephalosaurus" },
-    ["Zen Egg"]       = { "Shiba Inu", "Tanuki", "Kappa", "Nihonzaru", "Tanchozuru", "Kitsune"},
+    ["Zen Egg"]       = { "Shiba Inu", "Tanuki", "Nihonzaru"},
 }
 
 -- 🔧 State
