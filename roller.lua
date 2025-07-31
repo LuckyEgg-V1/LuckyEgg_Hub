@@ -119,7 +119,8 @@ local function applyEggESP(egg, petName, weight)
     )
     lbl.TextColor3            = ready and Color3.new(1, 1, 1) or Color3.fromRGB(160, 160, 160)
     lbl.TextStrokeTransparency = ready and 0 or 0.5
-    lbl.TextScaled            = true
+    lbl.TextScaled            = false
+    lbl.TextSize              = 10
     lbl.Font                  = Enum.Font.FredokaOne
 
     glitchLabelEffect(lbl)
