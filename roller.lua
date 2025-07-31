@@ -22,10 +22,10 @@ local petTable = {
     ["Bee Egg"]       = { "Bee", "Honey Bee", "Bear Bee", "Petal Bee" },
     ["Anti Bee Egg"]  = { "Wasp", "Moth", "Tarantula Hawk" },
     ["Oasis Egg"]     = { "Meerkat", "Sand Snake", "Axolotl" },
-    ["Paradise Egg"]  = { "Ostrich", "Peacock", "Capybara"},
+    ["Paradise Egg"]  = { "Ostrich", "Peacock", "Capybara" },
     ["Dinosaur Egg"]  = { "Raptor", "Triceratops", "Stegosaurus" },
     ["Primal Egg"]    = { "Parasaurolophus", "Iguanodon", "Pachycephalosaurus" },
-    ["Zen Egg"]       = { "Shiba Inu", "Tanuki", "Nihonzaru"},
+    ["Zen Egg"]       = { "Shiba Inu", "Tanuki", "Nihonzaru" },
 }
 
 -- 🔧 State
@@ -344,4 +344,3 @@ credit.Text                 = "Made by - LuckyEgg"
 credit.Font                 = Enum.Font.Gotham
 credit.TextSize             = 16
 credit.TextColor3           = Color3.fromRGB(255,215,0)
-
