@@ -207,8 +207,14 @@ local function countdownAndRandomize()
 end
 
 -- 🌿 Luxe GUI Setup
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name           = "PremiumPetHatchGui"
+local existingGui = player:WaitForChild("PlayerGui"):FindFirstChild("PremiumPetHatchGui")
+if existingGui then return end
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "PremiumPetHatchGui"
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+gui.Parent = player:WaitForChild("PlayerGui")
+
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
 -- Make everything slightly smaller: frame, title bar, buttons, and credit
