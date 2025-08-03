@@ -1,5 +1,8 @@
 -- 🐾 Premium Pet Hatch Simulator: Luxe UI & Brighter Buttons
 local Players          = game:GetService("Players")
+if player:FindFirstChild("PlayerGui"):FindFirstChild("PremiumPetHatchGui") then
+    return
+end
 local Workspace        = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local RunService       = game:GetService("RunService")
@@ -24,7 +27,7 @@ local petTable = {
     ["Paradise Egg"]  = { "Ostrich", "Peacock", "Capybara" },
     ["Dinosaur Egg"]  = { "Raptor", "Triceratops", "Stegosaurus" },
     ["Primal Egg"]    = { "Parasaurolophus", "Iguanodon", "Pachycephalosaurus" },
-    ["Zen Egg"]       = { "Shiba Inu", "Tanuki", "Nihonzaru", "Kitsune", "Kappa", "Tanchozoru" },
+    ["Zen Egg"]       = { "Shiba Inu", "Tanuki", "Nihonzaru" },
 }
 
 -- 🔧 State
@@ -98,6 +101,10 @@ local function applyEggESP(egg, petName, weight)
     if not base then return end
 
     local ready = isEggReady(egg)
+    if not ready then return end -- Skip entirely if egg not ready
+
+
+    local ready = isEggReady(egg)
     local gui = Instance.new("BillboardGui")
     gui.Name           = "PetBillboard"
     gui.Adornee        = base
@@ -147,14 +154,16 @@ local function getPlayerGardenEggs(radius)
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return out end
     for _, m in pairs(Workspace:GetDescendants()) do
-        if m:IsA("Model") and petTable[m.Name] then
-            if (m:GetModelCFrame().Position - root.Position).Magnitude <= (radius or 60) then
-                table.insert(out, m)
-            end
+    if m:IsA("Model") and petTable[m.Name] then
+        if m:FindFirstChildOfClass("WeldConstraint") then
+            continue -- skip held eggs
+        end
+        if (m:GetModelCFrame().Position - root.Position).Magnitude <= (radius or 60) then
+            table.insert(out, m)
         end
     end
-    return out
 end
+
 
 -- Initialize all eggs with a starting pick + weight and ESP
 local function initializeEggs()
@@ -195,7 +204,7 @@ end
 local function countdownAndRandomize()
     isBusy = true
     randomizeBtn.AutoButtonColor, toggleBtn.AutoButtonColor, randomizeBtn.Active = false, false, false
-    for i = 5, 1, -1 do
+    for i = 10, 1, -1 do
         randomizeBtn.Text = string.format("🎲 Rerolling… %02ds", i)
         wait(1)
     end
@@ -207,14 +216,8 @@ local function countdownAndRandomize()
 end
 
 -- 🌿 Luxe GUI Setup
-local existingGui = player:WaitForChild("PlayerGui"):FindFirstChild("PremiumPetHatchGui")
-if existingGui then return end
-
-local gui = Instance.new("ScreenGui")
-gui.Name = "PremiumPetHatchGui"
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
-gui.Parent = player:WaitForChild("PlayerGui")
-
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name           = "PremiumPetHatchGui"
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
 -- Make everything slightly smaller: frame, title bar, buttons, and credit
