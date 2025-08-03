@@ -1,11 +1,15 @@
 -- 🐾 Premium Pet Hatch Simulator: Luxe UI & Brighter Buttons
 local Players          = game:GetService("Players")
+local player           = Players.LocalPlayer  -- ✅ Move this before using `player`
+
 if player:FindFirstChild("PlayerGui"):FindFirstChild("PremiumPetHatchGui") then
     return
 end
+
 local Workspace        = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local RunService       = game:GetService("RunService")
+
 
 local player = Players.LocalPlayer
 
