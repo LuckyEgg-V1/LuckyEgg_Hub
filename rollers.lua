@@ -195,7 +195,7 @@ end
 local function countdownAndRandomize()
     isBusy = true
     randomizeBtn.AutoButtonColor, toggleBtn.AutoButtonColor, randomizeBtn.Active = false, false, false
-    for i = 10, 1, -1 do
+    for i = 5, 1, -1 do
         randomizeBtn.Text = string.format("🎲 Rerolling… %02ds", i)
         wait(1)
     end
