@@ -26,6 +26,8 @@ local petTable = {
     ["Primal Egg"]    = { "Parasaurolophus", "Iguanodon", "Pachycephalosaurus" },
     ["Zen Egg"]       = { "Shiba Inu", "Tanuki", "Nihonzaru" },
     ["Gourmet Egg"]   = { "Bagel Bunny", "Pancake Mole", "Sushi Bear"},
+    ["Sprout Egg"]   = { "Dairy Cow", "Jackalope", "Seedling"},
+    ["Enchanted Egg"]   = { "Ladybug", "Pixie", "Imp"},
 }
 
 -- 🔧 State
